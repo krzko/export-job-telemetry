@@ -1,0 +1,41 @@
+name: Export Job Telemetry
+
+description: >
+  This GitHub Action exports job telemetry, including resource attributes and timing data, using OpenTelemetry. It captures telemetry related to a GitHub Actions job to aid observability.
+
+author: Kristof Kowalski
+
+inputs:
+  traceparent:
+    required: true
+    description: >
+      The traceparent value for the OpenTelemetry trace, used to continue a trace.
+  created-at:
+    required: false
+    description: >
+      The creation time of the GitHub Actions job, used to calculate the job's metrics.
+  started-at:
+    required: false
+    description: >
+      The start time of the GitHub Actions job, used to calculate the job's metrics.
+  otel-exporter-otlp-headers:
+    required: false
+    description: >
+      Headers to attach to outgoing the OTLP gRPC exporter. Set via comma
+      separated values; header1=value1,header2=value2.
+  otel-resource-attributes:
+    required: false
+    description: >
+      Key-value pairs to be used as resource attributes. Set via comma-separated values; key1=value1,key2=value2.
+  otel-service-name:
+    required: true
+    description: >
+      Logical name of the service. Sets the value of the service.name resource attribute.
+
+runs:
+  using: node20
+  main: index.js
+
+branding:
+  icon: clock
+  color: blue-dark
