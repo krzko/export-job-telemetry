@@ -19,14 +19,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Set up telemetry
+        id: set-up-telemetry
+        uses: krzko/set-up-telemetry@v0.1.0
+
+      - name: Checkout
         uses: actions/checkout@v4
 
       - run: # do_some_work
 
       - name: Export job telemetry
         if: always()
-        uses: your-username/export-job-telemetry@main
+        uses: krzko/export-job-telemetry@v0.1.0
         with:
           otel-exporter-otlp-endpoint: ${{ env.OTEL_EXPORTER_OTLP_ENDPOINT }}
           otel-resource-attributes: ${{ env.OTEL_RESOURCE_ATTRIBUTES }}
