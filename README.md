@@ -15,7 +15,39 @@ To use this action in your GitHub Actions workflow, add a step that references t
 Here is a basic example of how to use this action:
 
 ```yaml
+name: Test and Build
+
+on:
+  push:
+
+env:
+  otel-exporter-otlp-endpoint: otelcol.foo.corp:443
+  otel-service-name: o11y.workflows
+  otel-resource-attributes: deployment.environent=dev,service.version=0.1.0
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up telemetry
+        id: set-up-telemetry
+        uses: krzko/set-up-telemetry@v0.1.0
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - run: # do_some_work
+
+      - name: Export job telemetry
+        if: always()
+        uses: krzko/export-job-telemetry@v0.1.0
+        with:
+          otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
+          otel-resource-attributes: "foo.new_attribute=123,${{ env.otel-resource-attributes }}"
+          otel-service-name: ${{ env.otel-service-name }}
+          started-at: ${{ steps.set-up-telemetry.outputs.started-at }}
+          traceparent: ${{ steps.set-up-telemetry.outputs.traceparent }}
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -32,9 +64,9 @@ jobs:
         if: always()
         uses: krzko/export-job-telemetry@v0.1.0
         with:
-          otel-exporter-otlp-endpoint: ${{ env.OTEL_EXPORTER_OTLP_ENDPOINT }}
-          otel-resource-attributes: ${{ env.OTEL_RESOURCE_ATTRIBUTES }}
-          otel-service-name: ${{ env.OTEL_SERVICE_NAME }}
+          otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
+          otel-resource-attributes: "foo.new_attribute=456,${{ env.otel-resource-attributes }}"
+          otel-service-name: ${{ env.otel-service-name }}
           started-at: ${{ steps.set-up-telemetry.outputs.started-at }}
           traceparent: ${{ steps.set-up-telemetry.outputs.traceparent }}
 ```
