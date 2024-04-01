@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"strings"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const actionName = "export-job-telemetry"
@@ -101,7 +101,37 @@ func main() {
 	defer shutdownTracer()
 
 	tracer := otel.Tracer(actionName)
-	_, span := tracer.Start(ctx, "Export Job Telemetry")
+
+	parts := strings.Split(params.Traceparent, "-")
+	if len(parts) != 4 {
+		githubactions.Fatalf("invalid traceparent: %v", params.Traceparent)
+	}
+
+	traceID, err := hex.DecodeString(parts[1])
+	if err != nil {
+		githubactions.Fatalf("invalid TraceID: %v", err)
+	}
+
+	parentSpanID, err := hex.DecodeString(parts[2])
+	if err != nil {
+		githubactions.Fatalf("invalid SpanID: %v", err)
+	}
+
+	// traceFlags, err := hex.DecodeString(parts[3])
+	// if err != nil || len(traceFlags) != 1 {
+	// 	githubactions.Fatalf("invalid TraceFlags: %v", err)
+	// }
+
+	sc := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID:    trace.TraceID(traceID),
+		SpanID:     trace.SpanID(parentSpanID),
+		TraceFlags: trace.FlagsSampled,
+		Remote:     true,
+	})
+
+	ctx = trace.ContextWithSpanContext(ctx, sc)
+
+	_, span := tracer.Start(ctx, "Export Job Telemetry", trace.WithNewRoot())
 	defer span.End()
 
 	startedAtTime, err := time.Parse(time.RFC3339, params.StartedAt)
@@ -111,16 +141,6 @@ func main() {
 
 	duration := time.Since(startedAtTime)
 	span.SetAttributes(attribute.String("job.duration", duration.String()))
-
-	parts := strings.Split(params.Traceparent, "-")
-	if len(parts) < 4 {
-		githubactions.Fatalf("invalid traceparent: %v", params.Traceparent)
-	}
-
-	traceID, _ := hex.DecodeString(parts[1])
-	spanID, _ := hex.DecodeString(parts[2])
-
-	fmt.Printf("TraceID: %x\nSpanID: %x\n", traceID, spanID)
 
 	for k, v := range params.OtelResourceAttrs {
 		span.SetAttributes(attribute.String(k, v))
