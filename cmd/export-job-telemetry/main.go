@@ -95,11 +95,11 @@ func main() {
 
 	params := parseInputParams()
 
-	ctx := context.Background()
-
+	// Initialize tracing
 	shutdownTracer := initTracer(params.OtelExporterEndpoint, params.OtelServiceName, params.OtelResourceAttrs, params.OtelExporterOtlpHeaders)
 	defer shutdownTracer()
 
+	// Parse the traceparent to extract the TraceID and SpanID
 	parts := strings.Split(params.Traceparent, "-")
 	if len(parts) != 4 {
 		githubactions.Fatalf("invalid traceparent: %v", params.Traceparent)
@@ -115,33 +115,38 @@ func main() {
 		githubactions.Fatalf("invalid SpanID: %v", err)
 	}
 
-	traceFlags, err := hex.DecodeString(parts[3])
-	if err != nil {
-		githubactions.Fatalf("invalid TraceFlags: %v", err)
-	}
-
-	sc := trace.NewSpanContext(trace.SpanContextConfig{
+	// Create a span context using the extracted TraceID and SpanID
+	spanContext := trace.NewSpanContext(trace.SpanContextConfig{
 		TraceID:    trace.TraceID(traceID),
 		SpanID:     trace.SpanID(parentSpanID),
-		TraceFlags: trace.TraceFlags(traceFlags[0]),
+		TraceFlags: trace.FlagsSampled,
 		Remote:     true,
 	})
 
-	ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
+	// Prepare the context with the remote span context
+	ctx := trace.ContextWithRemoteSpanContext(context.Background(), spanContext)
 
-	tracer := otel.Tracer(actionName)
-	_, span := tracer.Start(ctx, "Export Job Telemetry")
-	defer span.End()
-
+	// Extract the start time from the input parameters
 	startedAtTime, err := time.Parse(time.RFC3339, params.StartedAt)
 	if err != nil {
 		githubactions.Fatalf("failed to parse started-at time: %v", err)
 	}
 
-	duration := time.Now().Sub(startedAtTime)
-	durationMillis := duration.Milliseconds()
-	span.SetAttributes(attribute.Int64("job.duration.ms", durationMillis))
+	// Get the current time to use as the end time for the span
+	endTime := time.Now()
 
+	// Start the span with the specified start time
+	tracer := otel.Tracer(actionName)
+	_, span := tracer.Start(ctx, "Export Job Telemetry", trace.WithTimestamp(startedAtTime))
+
+	// End the span with the specified end time
+	span.End(trace.WithTimestamp(endTime))
+
+	// Calculate the duration and set it as an attribute
+	duration := endTime.Sub(startedAtTime)
+	span.SetAttributes(attribute.Int64("job.duration.ms", duration.Milliseconds()))
+
+	// Set additional attributes from the input parameters
 	for k, v := range params.OtelResourceAttrs {
 		span.SetAttributes(attribute.String(k, v))
 	}
