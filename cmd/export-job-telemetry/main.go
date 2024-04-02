@@ -141,10 +141,6 @@ func main() {
 	// Set the CI specific attributes
 	span.SetAttributes(attribute.String("ci.github.workflow.job.status", params.JobStatus))
 
-	// End the span
-	endTime := time.Now()
-	span.End(trace.WithTimestamp(endTime))
-
 	// Set the status of the span based on the job status
 	switch params.JobStatus {
 	case "success":
@@ -156,6 +152,7 @@ func main() {
 	}
 
 	// Calculate the duration and set it as an attribute
+	endTime := time.Now()
 	duration := endTime.Sub(startedAtTime)
 	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
 
@@ -174,4 +171,7 @@ func main() {
 	for k, v := range params.OtelResourceAttrs {
 		span.SetAttributes(attribute.String(k, v))
 	}
+
+	// End the span
+	span.End(trace.WithTimestamp(endTime))
 }
