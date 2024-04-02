@@ -125,7 +125,7 @@ func main() {
 		TraceFlags: trace.FlagsSampled,
 		Remote:     true,
 	})
-	githubactions.Infof("traceparent:", params.Traceparent)
+	// githubactions.Infof("traceparent:", params.Traceparent)
 
 	// Prepare the context with the remote span context
 	ctx := trace.ContextWithRemoteSpanContext(context.Background(), spanContext)
@@ -140,8 +140,9 @@ func main() {
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
 
 	// Set the CI specific attributes
-	span.SetAttributes(attribute.String("ci.github.workflow.job.status", params.JobStatus))
+	span.SetAttributes(attribute.String("ci.github.workflow.job.conclusion", params.JobStatus))
 	githubactions.Infof("Job status: %s", params.JobStatus)
+	span.SetStatus(codes.Ok, "Job completed successfully")
 
 	// Set the status of the span based on the job status
 	switch params.JobStatus {
