@@ -140,6 +140,7 @@ func main() {
 
 	// Set the CI specific attributes
 	span.SetAttributes(attribute.String("ci.github.workflow.job.status", params.JobStatus))
+	githubactions.Debugf("Job status: %s", params.JobStatus)
 
 	// Set the status of the span based on the job status
 	switch params.JobStatus {
