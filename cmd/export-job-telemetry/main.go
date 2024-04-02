@@ -9,6 +9,7 @@ import (
 	"github.com/sethvargo/go-githubactions"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -32,6 +33,7 @@ type InputParams struct {
 	OtelExporterOtlpHeaders map[string]string
 	StartedAt               string
 	CreatedAt               string
+	JobStatus               string
 }
 
 func parseInputParams() InputParams {
@@ -43,6 +45,7 @@ func parseInputParams() InputParams {
 		OtelExporterOtlpHeaders: parseKeyValuePairs(githubactions.GetInput("otel-exporter-otlp-headers")),
 		StartedAt:               githubactions.GetInput("started-at"),
 		CreatedAt:               githubactions.GetInput("created-at"),
+		JobStatus:               githubactions.GetInput("job-status"),
 	}
 }
 
@@ -95,7 +98,7 @@ func main() {
 
 	params := parseInputParams()
 
-	// Initialize tracing
+	// Initialise the OpenTelemetry tracer
 	shutdownTracer := initTracer(params.OtelExporterEndpoint, params.OtelServiceName, params.OtelResourceAttrs, params.OtelExporterOtlpHeaders)
 	defer shutdownTracer()
 
@@ -137,14 +140,35 @@ func main() {
 
 	// Start the span with the specified start time
 	tracer := otel.Tracer(actionName)
-	_, span := tracer.Start(ctx, "Export Job Telemetry", trace.WithTimestamp(startedAtTime))
+	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
 
 	// End the span with the specified end time
 	span.End(trace.WithTimestamp(endTime))
 
+	// Set the status of the span based on the job status
+	switch params.JobStatus {
+	case "success":
+		span.SetStatus(codes.Ok, "Job completed successfully")
+	case "failure":
+		span.SetStatus(codes.Error, "Job failed")
+	default:
+		span.SetStatus(codes.Unset, "Job status unknown")
+	}
+
 	// Calculate the duration and set it as an attribute
 	duration := endTime.Sub(startedAtTime)
-	span.SetAttributes(attribute.Int64("job.duration.ms", duration.Milliseconds()))
+	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
+
+	// Calculate the latency for the job, from creation to start
+	if params.CreatedAt != "" {
+		createdAtTime, err := time.Parse(time.RFC3339, params.CreatedAt)
+		if err != nil {
+			githubactions.Fatalf("failed to parse created-at time: %v", err)
+		}
+
+		latency := startedAtTime.Sub(createdAtTime)
+		span.SetAttributes(attribute.Int64("ci.github.workflow.job.latency_ms", latency.Milliseconds()))
+	}
 
 	// Set additional attributes from the input parameters
 	for k, v := range params.OtelResourceAttrs {

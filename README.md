@@ -42,6 +42,7 @@ jobs:
         if: always()
         uses: krzko/export-job-telemetry@v0.1.0
         with:
+          job-status: ${{ job.status }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
           otel-resource-attributes: "foo.new_attribute=123,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
@@ -64,6 +65,7 @@ jobs:
         if: always()
         uses: krzko/export-job-telemetry@v0.1.0
         with:
+          job-status: ${{ job.status }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
           otel-resource-attributes: "foo.new_attribute=456,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
@@ -81,6 +83,7 @@ jobs:
 | `otel-exporter-otlp-endpoint` | The endpoint for the OTLP gRPC exporter. | Yes |
 | `started-at` | The start time of the GitHub Actions job, used to calculate the job's metrics. Format should be in ISO 8601. | Yes |
 | `created-at` | The creation time of the GitHub Actions job, used to calculate the job's metrics. Format should be in ISO 8601. | No |
+| `job-status` | The status of the GitHub Actions job. | Yes |
 
 ## Outputs
 

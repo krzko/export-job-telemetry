@@ -6,18 +6,14 @@ description: >
 author: Kristof Kowalski
 
 inputs:
-  traceparent:
-    required: true
-    description: >
-      The traceparent value for the OpenTelemetry trace, used to continue a trace.
   created-at:
     required: false
     description: >
       The creation time of the GitHub Actions job, used to calculate the job's metrics.
-  started-at:
-    required: false
+  job-status:
+    required: true
     description: >
-      The start time of the GitHub Actions job, used to calculate the job's metrics.
+      The status of the GitHub Actions job.
   otel-exporter-otlp-endpoint:
     required: true
     description: >
@@ -36,6 +32,14 @@ inputs:
     required: true
     description: >
       Logical name of the service. Sets the value of the service.name resource attribute.
+  started-at:
+    required: false
+    description: >
+      The start time of the GitHub Actions job, used to calculate the job's metrics.
+  traceparent:
+    required: true
+    description: >
+      The traceparent value for the OpenTelemetry trace, used to continue a trace.
 
 runs:
   using: node20
