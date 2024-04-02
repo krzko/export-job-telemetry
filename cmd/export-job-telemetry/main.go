@@ -136,26 +136,33 @@ func main() {
 		githubactions.Fatalf("failed to parse started-at time: %v", err)
 	}
 
+	endTime := time.Now()
+
 	tracer := otel.Tracer(actionName)
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
+	defer span.End(trace.WithTimestamp(endTime))
 
 	// Set the CI specific attributes
 	span.SetAttributes(attribute.String("ci.github.workflow.job.conclusion", params.JobStatus))
 	githubactions.Infof("Job status: %s", params.JobStatus)
-	span.SetStatus(codes.Ok, "Job completed successfully")
 
 	// Set the status of the span based on the job status
+	var spanStatus codes.Code
+	var spanMessage string
 	switch params.JobStatus {
 	case "success":
-		span.SetStatus(codes.Ok, "Job completed successfully")
+		spanStatus = codes.Ok
+		spanMessage = "Job completed successfully"
 	case "failure":
-		span.SetStatus(codes.Error, "Job failed")
+		spanStatus = codes.Error
+		spanMessage = "Job failed"
 	default:
-		span.SetStatus(codes.Unset, "Job status unknown")
+		spanStatus = codes.Unset
+		spanMessage = "Job status unknown"
 	}
+	span.SetStatus(spanStatus, spanMessage)
 
 	// Calculate the duration and set it as an attribute
-	endTime := time.Now()
 	duration := endTime.Sub(startedAtTime)
 	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
 
