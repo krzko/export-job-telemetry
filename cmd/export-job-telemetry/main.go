@@ -98,7 +98,7 @@ func main() {
 
 	params := parseInputParams()
 
-	// Initialise the OpenTelemetry tracer
+	// Initialize the OpenTelemetry tracer
 	shutdownTracer := initTracer(params.OtelExporterEndpoint, params.OtelServiceName, params.OtelResourceAttrs, params.OtelExporterOtlpHeaders)
 	defer shutdownTracer()
 
@@ -135,14 +135,14 @@ func main() {
 		githubactions.Fatalf("failed to parse started-at time: %v", err)
 	}
 
-	// Get the current time to use as the end time for the span
-	endTime := time.Now()
-
-	// Start the span with the specified start time
 	tracer := otel.Tracer(actionName)
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
 
-	// End the span with the specified end time
+	// Set the CI specific attributes
+	span.SetAttributes(attribute.String("ci.github.workflow.job.status", params.JobStatus))
+
+	// End the span
+	endTime := time.Now()
 	span.End(trace.WithTimestamp(endTime))
 
 	// Set the status of the span based on the job status
@@ -170,7 +170,7 @@ func main() {
 		span.SetAttributes(attribute.Int64("ci.github.workflow.job.latency_ms", latency.Milliseconds()))
 	}
 
-	// Set additional attributes from the input parameters
+	// Set additional resource attributes from the input parameters
 	for k, v := range params.OtelResourceAttrs {
 		span.SetAttributes(attribute.String(k, v))
 	}
