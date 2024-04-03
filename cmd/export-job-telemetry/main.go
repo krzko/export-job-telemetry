@@ -98,11 +98,9 @@ func main() {
 
 	params := parseInputParams()
 
-	// Initialize the OpenTelemetry tracer
 	shutdownTracer := initTracer(params.OtelExporterEndpoint, params.OtelServiceName, params.OtelResourceAttrs, params.OtelExporterOtlpHeaders)
 	defer shutdownTracer()
 
-	// Parse the traceparent to extract the TraceID and SpanID
 	parts := strings.Split(params.Traceparent, "-")
 	if len(parts) != 4 {
 		githubactions.Fatalf("invalid traceparent: %v", params.Traceparent)
@@ -118,19 +116,15 @@ func main() {
 		githubactions.Fatalf("invalid SpanID: %v", err)
 	}
 
-	// Create a span context using the extracted TraceID and SpanID
 	spanContext := trace.NewSpanContext(trace.SpanContextConfig{
 		TraceID:    trace.TraceID(traceID),
 		SpanID:     trace.SpanID(parentSpanID),
 		TraceFlags: trace.FlagsSampled,
 		Remote:     true,
 	})
-	// githubactions.Infof("traceparent:", params.Traceparent)
 
-	// Prepare the context with the remote span context
 	ctx := trace.ContextWithRemoteSpanContext(context.Background(), spanContext)
 
-	// Extract the start time from the input parameters
 	startedAtTime, err := time.Parse(time.RFC3339, params.StartedAt)
 	if err != nil {
 		githubactions.Fatalf("failed to parse started-at time: %v", err)
@@ -139,31 +133,25 @@ func main() {
 	tracer := otel.Tracer(actionName)
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
 
-	// Set the CI specific attributes
-	span.SetAttributes(attribute.String("ci.github.workflow.job.conclusion", params.JobStatus))
-	githubactions.Infof("Job status: %s", params.JobStatus)
+	attributes := []attribute.KeyValue{
+		attribute.String("ci.github.workflow.job.conclusion", params.JobStatus),
+	}
 
-	// Set the status of the span based on the job status
 	var spanStatus codes.Code
 	var spanMessage string
 	switch params.JobStatus {
 	case "success":
 		spanStatus = codes.Ok
 		spanMessage = "Job completed successfully"
-		githubactions.Infof(("Setting span status to OK"))
 	case "failure":
 		spanStatus = codes.Error
 		spanMessage = "Job failed"
-		githubactions.Infof(("Setting span status to ERROR"))
 	default:
 		spanStatus = codes.Unset
 		spanMessage = "Job status unknown"
-		githubactions.Infof(("Setting span status to UNSET"))
 	}
 	span.SetStatus(spanStatus, spanMessage)
-	githubactions.Infof("Span status: %s", spanStatus)
 
-	// Calculate the latency for the job, from creation to start
 	if params.CreatedAt != "" {
 		createdAtTime, err := time.Parse(time.RFC3339, params.CreatedAt)
 		if err != nil {
@@ -171,18 +159,18 @@ func main() {
 		}
 
 		latency := startedAtTime.Sub(createdAtTime)
-		span.SetAttributes(attribute.Int64("ci.github.workflow.job.latency_ms", latency.Milliseconds()))
+		attributes = append(attributes, attribute.Int64("ci.github.workflow.job.latency_ms", latency.Milliseconds()))
 	}
 
-	// Set additional resource attributes from the input parameters
-	for k, v := range params.OtelResourceAttrs {
-		span.SetAttributes(attribute.String(k, v))
-	}
-
-	// Calculate the duration and set it as an attribute
 	endTime := time.Now()
 	duration := endTime.Sub(startedAtTime)
-	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
+	attributes = append(attributes, attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
+
+	for k, v := range params.OtelResourceAttrs {
+		attributes = append(attributes, attribute.String(k, v))
+	}
+
+	span.SetAttributes(attributes...)
 
 	span.End(trace.WithTimestamp(endTime))
 }
