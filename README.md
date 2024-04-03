@@ -90,13 +90,15 @@ jobs:
 
 | Name | Description | Required |
 |------|-------------|:--------:|
-| `traceparent` | The traceparent value for the OpenTelemetry trace, used to continue a trace. | Yes |
+| `created-at` | The creation time of the GitHub Actions job, used to calculate the job's metrics. Format should be in ISO 8601. | No |
+| `job-name` | The name of the GitHub Actions job. | No |
+| `job-status` | The status of the GitHub Actions job. | Yes |
+| `otel-exporter-otlp-endpoint` | The endpoint for the OTLP gRPC exporter. | Yes |
+| `otel-exporter-otlp-headers` | Headers to be used in the OTLP gRPC exporter. Set via comma-separated values; `key1=value1,key2=value2`. | No |
 | `otel-resource-attributes` | Key-value pairs to be used as resource attributes. Set via comma-separated values; `key1=value1,key2=value2`. | No |
 | `otel-service-name` | Logical name of the service. Sets the value of the `service.name` resource attribute. | Yes |
-| `otel-exporter-otlp-endpoint` | The endpoint for the OTLP gRPC exporter. | Yes |
 | `started-at` | The start time of the GitHub Actions job, used to calculate the job's metrics. Format should be in ISO 8601. | Yes |
-| `created-at` | The creation time of the GitHub Actions job, used to calculate the job's metrics. Format should be in ISO 8601. | No |
-| `job-status` | The status of the GitHub Actions job. | Yes |
+| `traceparent` | The traceparent value for the OpenTelemetry trace, used to continue a trace. | Yes |
 
 ## Outputs
 
