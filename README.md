@@ -38,7 +38,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up telemetry
+      - name: Setup telemetry
         id: setup-telemetry
         uses: krzko/setup-telemetry@v0.3.0
 
@@ -61,7 +61,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up telemetry
+      - name: Setup telemetry
         id: setup-telemetry
         uses: krzko/setup-telemetry@v0.3.0
 
