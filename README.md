@@ -1,12 +1,21 @@
 # Export Job Telemetry
 
-This GitHub Action exports telemetry data for a GitHub Actions job, including resource attributes and timing information, using OpenTelemetry.
+This GitHub Action is designed to export telemetry data for a GitHub Actions job, including resource attributes and timing information, using OpenTelemetry. To minimise API calls to the GitHub API and to ensure deterministic trace and span IDs, instrument your workflow with [https://github.com/krzko/set-up-telemetry](https://github.com/krzko/set-up-telemetry).
+
+This action is intended to be used in conjunction with the [OpenTelemetry Collector GitHub Actions Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/27460). This receiver processes GitHub Actions webhook events to observe workflows and jobs, converting them into trace telemetry for detailed observability.
 
 ## Features
 
 - Export trace data in OpenTelemetry format.
 - Capture and report the start and end times of the GitHub Actions job.
 - Include custom resource attributes for enhanced observability.
+- Utilises deterministic Trace and Span IDs to align with the OpenTelemetry Collector GitHub Actions Receiver.
+
+## GitHub Actions Receiver
+
+The GitHub Actions Receiver processes GitHub Actions webhook events to observe workflows and jobs. It handles `workflow_job` and `workflow_run` event payloads, transforming them into trace telemetry. This allows the observation of workflow execution times, success, and failure rates. If a secret is configured (recommended), it validates the payload ensuring data integrity before processing.
+
+For more details on the receiver, see the GitHub issue: [OpenTelemetry Collector Contrib #27460](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/27460).
 
 ## Usage
 
@@ -31,7 +40,7 @@ jobs:
     steps:
       - name: Set up telemetry
         id: set-up-telemetry
-        uses: krzko/set-up-telemetry@v0.1.0
+        uses: krzko/set-up-telemetry@v0.2.0
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +49,7 @@ jobs:
 
       - name: Export job telemetry
         if: always()
-        uses: krzko/export-job-telemetry@v0.1.0
+        uses: krzko/export-job-telemetry@v0.2.0
         with:
           job-status: ${{ job.status }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
@@ -54,7 +63,7 @@ jobs:
     steps:
       - name: Set up telemetry
         id: set-up-telemetry
-        uses: krzko/set-up-telemetry@v0.1.0
+        uses: krzko/set-up-telemetry@v0.2.0
 
       - name: Checkout
         uses: actions/checkout@v4
