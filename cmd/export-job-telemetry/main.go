@@ -140,7 +140,7 @@ func main() {
 
 	tracer := otel.Tracer(actionName)
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
-	defer span.End(trace.WithTimestamp(endTime))
+	// defer span.End(trace.WithTimestamp(endTime))
 
 	// Set the CI specific attributes
 	span.SetAttributes(attribute.String("ci.github.workflow.job.conclusion", params.JobStatus))
