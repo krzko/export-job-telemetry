@@ -136,11 +136,8 @@ func main() {
 		githubactions.Fatalf("failed to parse started-at time: %v", err)
 	}
 
-	endTime := time.Now()
-
 	tracer := otel.Tracer(actionName)
 	_, span := tracer.Start(ctx, "Job telemetry", trace.WithTimestamp(startedAtTime))
-	// defer span.End(trace.WithTimestamp(endTime))
 
 	// Set the CI specific attributes
 	span.SetAttributes(attribute.String("ci.github.workflow.job.conclusion", params.JobStatus))
@@ -166,10 +163,6 @@ func main() {
 	span.SetStatus(spanStatus, spanMessage)
 	githubactions.Infof("Span status: %s", spanStatus)
 
-	// Calculate the duration and set it as an attribute
-	duration := endTime.Sub(startedAtTime)
-	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
-
 	// Calculate the latency for the job, from creation to start
 	if params.CreatedAt != "" {
 		createdAtTime, err := time.Parse(time.RFC3339, params.CreatedAt)
@@ -186,6 +179,10 @@ func main() {
 		span.SetAttributes(attribute.String(k, v))
 	}
 
-	// End the span
+	// Calculate the duration and set it as an attribute
+	endTime := time.Now()
+	duration := endTime.Sub(startedAtTime)
+	span.SetAttributes(attribute.Int64("ci.github.workflow.job.duration_ms", duration.Milliseconds()))
+
 	span.End(trace.WithTimestamp(endTime))
 }
