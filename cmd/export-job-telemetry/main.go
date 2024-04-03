@@ -153,14 +153,18 @@ func main() {
 	case "success":
 		spanStatus = codes.Ok
 		spanMessage = "Job completed successfully"
+		githubactions.Infof(("Setting span status to OK"))
 	case "failure":
 		spanStatus = codes.Error
 		spanMessage = "Job failed"
+		githubactions.Infof(("Setting span status to ERROR"))
 	default:
 		spanStatus = codes.Unset
 		spanMessage = "Job status unknown"
+		githubactions.Infof(("Setting span status to UNSET"))
 	}
 	span.SetStatus(spanStatus, spanMessage)
+	githubactions.Infof("Span status: %s", spanStatus)
 
 	// Calculate the duration and set it as an attribute
 	duration := endTime.Sub(startedAtTime)
