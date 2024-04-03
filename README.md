@@ -72,7 +72,7 @@ jobs:
 
       - name: Export job telemetry
         if: always()
-        uses: krzko/export-job-telemetry@v0.1.0
+        uses: krzko/export-job-telemetry@v0.2.0
         with:
           job-status: ${{ job.status }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
