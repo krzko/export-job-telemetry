@@ -1,6 +1,6 @@
 # Export Job Telemetry
 
-This GitHub Action is designed to export telemetry data for a GitHub Actions job, including resource attributes and timing information, using OpenTelemetry. To minimise API calls to the GitHub API and to ensure deterministic trace and span IDs, instrument your workflow with [https://github.com/krzko/set-up-telemetry](https://github.com/krzko/set-up-telemetry).
+This GitHub Action is designed to export telemetry data for a GitHub Actions job, including resource attributes and timing information, using OpenTelemetry. To minimise API calls to the GitHub API and to ensure deterministic trace and span IDs, instrument your workflow with [https://github.com/krzko/setup-telemetry](https://github.com/krzko/setup-telemetry).
 
 This action is intended to be used in conjunction with the [OpenTelemetry Collector GitHub Actions Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/27460). This receiver processes GitHub Actions webhook events to observe workflows and jobs, converting them into trace telemetry for detailed observability.
 
@@ -39,8 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up telemetry
-        id: set-up-telemetry
-        uses: krzko/set-up-telemetry@v0.2.1
+        id: setup-telemetry
+        uses: krzko/setup-telemetry@v0.3.0
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,15 +55,15 @@ jobs:
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
           otel-resource-attributes: "foo.new_attribute=123,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
-          started-at: ${{ steps.set-up-telemetry.outputs.started-at }}
-          traceparent: ${{ steps.set-up-telemetry.outputs.traceparent }}
+          started-at: ${{ steps.setup-telemetry.outputs.started-at }}
+          traceparent: ${{ steps.setup-telemetry.outputs.traceparent }}
 
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Set up telemetry
-        id: set-up-telemetry
-        uses: krzko/set-up-telemetry@v0.2.1
+        id: setup-telemetry
+        uses: krzko/setup-telemetry@v0.3.0
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,8 +78,8 @@ jobs:
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
           otel-resource-attributes: "foo.new_attribute=456,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
-          started-at: ${{ steps.set-up-telemetry.outputs.started-at }}
-          traceparent: ${{ steps.set-up-telemetry.outputs.traceparent }}
+          started-at: ${{ steps.setup-telemetry.outputs.started-at }}
+          traceparent: ${{ steps.setup-telemetry.outputs.traceparent }}
 ```
 
 ## Inputs
