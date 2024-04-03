@@ -49,9 +49,11 @@ jobs:
 
       - name: Export job telemetry
         if: always()
-        uses: krzko/export-job-telemetry@v0.2.1
+        uses: krzko/export-job-telemetry@v0.3.0
         with:
+          created-at: ${{ steps.setup-telemetry.outputs.created-at }}
           job-status: ${{ job.status }}
+          job-name: ${{ steps.setup-telemetry.outputs.job-name }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
           otel-resource-attributes: "foo.new_attribute=123,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
@@ -72,11 +74,13 @@ jobs:
 
       - name: Export job telemetry
         if: always()
-        uses: krzko/export-job-telemetry@v0.2.1
+        uses: krzko/export-job-telemetry@v0.3.0
         with:
+          created-at: ${{ steps.setup-telemetry.outputs.created-at }}
           job-status: ${{ job.status }}
+          job-name: ${{ steps.setup-telemetry.outputs.job-name }}
           otel-exporter-otlp-endpoint: ${{ env.otel-exporter-otlp-endpoint }}
-          otel-resource-attributes: "foo.new_attribute=456,${{ env.otel-resource-attributes }}"
+          otel-resource-attributes: "foo.new_attribute=123,${{ env.otel-resource-attributes }}"
           otel-service-name: ${{ env.otel-service-name }}
           started-at: ${{ steps.setup-telemetry.outputs.started-at }}
           traceparent: ${{ steps.setup-telemetry.outputs.traceparent }}
