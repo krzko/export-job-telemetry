@@ -10,6 +10,10 @@ inputs:
     required: false
     description: >
       The creation time of the GitHub Actions job, used to calculate the job's metrics.
+  job-name:
+    required: false
+    description: >
+      The name of the GitHub Actions job.
   job-status:
     required: true
     description: >

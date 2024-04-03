@@ -34,6 +34,7 @@ type InputParams struct {
 	StartedAt               string
 	CreatedAt               string
 	JobStatus               string
+	JobName                 string
 }
 
 func parseInputParams() InputParams {
@@ -46,6 +47,7 @@ func parseInputParams() InputParams {
 		StartedAt:               githubactions.GetInput("started-at"),
 		CreatedAt:               githubactions.GetInput("created-at"),
 		JobStatus:               githubactions.GetInput("job-status"),
+		JobName:                 githubactions.GetInput("job-name"),
 	}
 }
 
@@ -159,7 +161,14 @@ func main() {
 		}
 
 		latency := startedAtTime.Sub(createdAtTime)
-		attributes = append(attributes, attribute.Int64("ci.github.workflow.job.latency_ms", latency.Milliseconds()))
+		attributes = append(attributes, attribute.Int64("ci.github.workflow.job.start_latency_ms", latency.Milliseconds()))
+	}
+
+	if params.JobName != "" {
+		if err != nil {
+			githubactions.Fatalf("failed to parse job-name: %v", err)
+		}
+		attributes = append(attributes, attribute.String("ci.github.workflow.job.name", params.JobName))
 	}
 
 	endTime := time.Now()
