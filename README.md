@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Setup telemetry
         id: setup-telemetry
-        uses: krzko/setup-telemetry@v0.3.0
+        uses: krzko/setup-telemetry@v0.4.1
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
     steps:
       - name: Setup telemetry
         id: setup-telemetry
-        uses: krzko/setup-telemetry@v0.3.0
+        uses: krzko/setup-telemetry@v0.4.1
 
       - name: Checkout
         uses: actions/checkout@v4
