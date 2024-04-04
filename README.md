@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Setup telemetry
         id: setup-telemetry
-        uses: krzko/setup-telemetry@v0.5.1
+        uses: krzko/setup-telemetry@v0.5.2
         with:
           observability-backend-url: ${{ env.observability-backend-url }}
 
@@ -68,7 +68,7 @@ jobs:
     steps:
       - name: Setup telemetry
         id: setup-telemetry
-        uses: krzko/setup-telemetry@v0.5.1
+        uses: krzko/setup-telemetry@v0.5.2
         with:
           observability-backend-url: ${{ env.observability-backend-url }}
 
